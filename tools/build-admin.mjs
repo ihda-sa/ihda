@@ -99,8 +99,12 @@ const run = async () => {
     if (again !== pw) { console.error('\n✗ الكلمتان غير متطابقتين.'); process.exit(1); }
   }
 
+  // المفتاح يُخزَّن خارج مجلد المشروع حتى لا يُحذف مع أي تنظيف للملفات
+  const STORE = join(process.env.APPDATA || process.env.HOME || ROOT, 'ihda', 'gh-token');
   let token = '';
-  try { token = readFileSync(join(ROOT, '.gh-token'), 'utf8').trim(); } catch {}
+  for (const f of [STORE, join(ROOT, '.gh-token')]) {
+    try { token = readFileSync(f, 'utf8').trim(); if (token) break; } catch {}
+  }
   if (process.env.IHDA_GH_TOKEN) token = process.env.IHDA_GH_TOKEN.trim();
 
   const bundle = {
@@ -121,7 +125,11 @@ const run = async () => {
   console.log(`\n✓ تم بناء اللوحة المقفلة`);
   console.log(`  المحتوى المشفّر: ${kb} كيلوبايت`);
   console.log(`  الملف: admin/index.html`);
-  console.log(token ? `  النشر التلقائي: مفعّل ✓` : `  النشر التلقائي: غير مفعّل (لا يوجد ملف .gh-token)`);
+  if (token) console.log(`  النشر التلقائي: مفعّل ✓`);
+  else {
+    console.log(`  ⚠️  النشر التلقائي: غير مفعّل — لا يوجد مفتاح محفوظ`);
+    console.log(`     زر «انشر الإهداء» في اللوحة لن يعمل.`);
+  }
   console.log(`\n  الرابط بعد النشر: https://gift.wesal-shop.com/admin/`);
   console.log(`  لا يفتحها إلا من يعرف كلمة السر. احفظها — لا يمكن استرجاعها.\n`);
 };

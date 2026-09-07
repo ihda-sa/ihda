@@ -74,11 +74,20 @@ if ($p1 -ne $p2) { Show-Msg 'الكلمتان غير متطابقتين. شغّ�
 if ($p1.Length -lt 6) { Show-Msg 'كلمة السر قصيرة. استخدم ٦ خانات فأكثر.' 'خطأ' 'Error'; exit 1 }
 
 # ---------- مفتاح النشر التلقائي ----------
-$tokenFile = Join-Path (Get-Location) '.gh-token'
+$store = Join-Path $env:APPDATA 'ihda'
+if (-not (Test-Path $store)) { New-Item -ItemType Directory -Path $store -Force | Out-Null }
+$tokenFile = Join-Path $store 'gh-token'
+
+# ترحيل المفتاح القديم من داخل المجلد إن وُجد
+$legacy = Join-Path (Get-Location) '.gh-token'
+if ((Test-Path $legacy) -and (-not (Test-Path $tokenFile))) {
+  Move-Item -Path $legacy -Destination $tokenFile -Force
+}
+
 if (-not (Test-Path $tokenFile)) {
   $ask = [System.Windows.Forms.MessageBox]::Show(
-    "تبي تفعّل النشر التلقائي؟`n`nمع التفعيل يصير زر «انشر الإهداء» داخل اللوحة يرفع الإهداء للموقع مباشرة، بلا أي خطوة يدوية.`n`nيحتاج مفتاح وصول من GitHub. اضغط نعم وأشرح لك الخطوات.",
-    'النشر التلقائي', 'YesNo', 'Question', 'Button1', $RTL)
+    "تنبيه: ما فيه مفتاح نشر محفوظ.`n`nإذا كمّلت بدونه، زر «انشر الإهداء» داخل اللوحة لن يعمل ولازم ترفع كل إهداء يدويًا.`n`nتبي تدخل المفتاح الآن؟",
+    'النشر التلقائي غير مفعّل', 'YesNo', 'Warning', 'Button1', $RTL)
 
   if ($ask -eq [System.Windows.Forms.DialogResult]::Yes) {
     Show-Msg "افتح هذي الصفحة في المتصفح:`n`ngithub.com/settings/personal-access-tokens/new`n`n1) الاسم: ihda-publish`n2) Expiration: اختر No expiration`n3) Repository access: Only select repositories ثم اختر ihda`n4) Permissions ثم Repository permissions ثم Contents: اجعلها Read and write`n5) اضغط Generate token وانسخ المفتاح`n`nبعدها الصقه في النافذة الجاية." 'خطوات إنشاء المفتاح' 'Information'
@@ -127,7 +136,7 @@ if (-not (Test-Path $tokenFile)) {
 
     if ($tres -eq [System.Windows.Forms.DialogResult]::OK -and $tokVal.Length -gt 20) {
       Set-Content -Path $tokenFile -Value $tokVal -Encoding ascii -NoNewline
-      Show-Msg 'تم حفظ المفتاح. النشر التلقائي بيصير مفعّلًا داخل اللوحة.' 'تم' 'Information'
+      Show-Msg 'تم حفظ المفتاح خارج مجلد المشروع، فما يتأثر بأي تعديل على الملفات.' 'تم' 'Information'
     }
   }
 }
