@@ -1,0 +1,26 @@
+{
+  "type": "arrow",
+  "theme": "pink",
+  "recipient": "هبة",
+  "sender": "فادي",
+  "gender": "f",
+  "arrow": {
+    "introCaption": "شيء صغير… لك",
+    "pinkCaption": "تمنّي أمنية",
+    "headline": "Happy Birthday",
+    "pinkSub": "ورسالة من القلب",
+    "finalCaption": "عام جديد…",
+    "finalHeadline": "كل عام وأنتِ بخير",
+    "finalSub": "يزهر بوجودك ✿",
+    "message": "كل سنة وأنتِ السبب في إن الدنيا أحلى. عيد ميلاد سعيد يا هبة."
+  },
+  "items": [
+    {
+      "type": "letter",
+      "label": "رسالة",
+      "to": "إلى هبة،",
+      "body": "في يومك هذا أحب أذكّرك إنك من أجمل ما صار في حياتي. كل عام وأنتِ أقرب لقلبي.",
+      "from": "— فادي"
+    }
+  ]
+}

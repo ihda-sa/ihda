@@ -1,0 +1,39 @@
+{
+  "type": "love",
+  "theme": "pink",
+  "recipient": "سارة",
+  "sender": "فهد",
+  "gender": "f",
+  "pattern": "hearts",
+  "ask": {
+    "question": "تحبيني؟ 💗"
+  },
+  "items": [
+    {
+      "type": "photos",
+      "label": "هدية 1",
+      "title": "لحظات محفوظة",
+      "photos": [
+        { "src": "gifts/media/demo/1.svg", "caption": "أول رحلة لنا" },
+        { "src": "gifts/media/demo/2.svg", "caption": "يوم البحر" },
+        { "src": "gifts/media/demo/3.svg", "caption": "ضحكتك" },
+        { "src": "gifts/media/demo/4.svg", "caption": "إحنا" }
+      ]
+    },
+    {
+      "type": "song",
+      "label": "هدية 2",
+      "title": "أغنية تذكّرني فيك",
+      "youtube": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "note": "كل مرة أسمعها أتذكر أول مرة سمعناها سوا."
+    },
+    {
+      "type": "letter",
+      "label": "هدية 3",
+      "to": "إلى سارة،",
+      "body": "اليوم كله عنك… وأبغاك تعرفين كم أنا ممنون إن لك مكانًا في حياتي.\n\nمن اللحظة اللي دخلتي فيها عالمي صار كل شي أدفأ وأحلى وأصدق. تخلّين اللحظات العادية تصير خاصة بمجرد وجودك.\n\nفي الهدوء وفي الضحك، في الأيام الطويلة والقصيرة، ألاقي فيك راحة ما لقيتها في مكان ثاني.\n\nمهما تغيّر كل شي، شي واحد ما يتغيّر: قلبي معك.",
+      "from": "— دايمًا لك، فهد",
+      "pattern": "hearts"
+    }
+  ]
+}
