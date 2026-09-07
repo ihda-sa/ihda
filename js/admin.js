@@ -1,5 +1,5 @@
 /* لوحة إنشاء الإهداءات — تبني ملف JSON لكل زبون (بدون سيرفر) */
-import { encryptJSON } from './crypto.js';
+import { encryptJSON, sealJSON, newKey, newId } from './crypto.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -17,7 +17,7 @@ const THEMES = { pink: '#e2568a', lilac: '#8a5ee0', sky: '#3f7fd9', mint: '#2e9d
 
 const blankDay = () => ({ title: '', text: '', image: '', link: '' });
 const state = {
-  type: 'love', id: '', recipient: '', sender: '', gender: 'f', theme: 'pink', pattern: 'hearts', sticker: '', stickerYes: '', hubTitle: '',
+  type: 'love', id: '', key: '', recipient: '', sender: '', gender: 'f', theme: 'pink', pattern: 'hearts', sticker: '', stickerYes: '', hubTitle: '',
   ask: { question: '', yes: '', no: '', hubTitle: '', steps: '' },
   items: [
     { type: 'photos', label: 'هدية 1', title: 'لحظات محفوظة', photos: [{ src: '', caption: '' }, { src: '', caption: '' }, { src: '', caption: '' }] },
@@ -318,14 +318,16 @@ $('#d-count').addEventListener('input', (e) => {
 });
 
 /* ---------- المعرّف ---------- */
-const AR = { 'ا': 'a', 'أ': 'a', 'إ': 'e', 'آ': 'a', 'ب': 'b', 'ت': 't', 'ث': 'th', 'ج': 'j', 'ح': 'h', 'خ': 'kh', 'د': 'd', 'ذ': 'th', 'ر': 'r', 'ز': 'z', 'س': 's', 'ش': 'sh', 'ص': 's', 'ض': 'd', 'ط': 't', 'ظ': 'z', 'ع': 'a', 'غ': 'gh', 'ف': 'f', 'ق': 'q', 'ك': 'k', 'ل': 'l', 'م': 'm', 'ن': 'n', 'ه': 'h', 'ة': 'a', 'و': 'w', 'ي': 'y', 'ى': 'a', 'ء': '', 'ئ': 'e', 'ؤ': 'o', 'لا': 'la' };
-const slug = (s) => [...s.normalize('NFKD').replace(/[ً-ْ]/g, '')].map((c) => AR[c] ?? c).join('')
-  .replace(/[^\w-]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase().slice(0, 24);
+function freshIdentity() {
+  state.id = newId();
+  state.key = newKey();
+  $('#f-id').value = state.id;
+}
 $('#genId').addEventListener('click', () => {
-  const rnd = Math.random().toString(36).slice(2, 6);
-  const base = slug(state.recipient) || 'gift';
-  state.id = `${base}-${rnd}`;
-  $('#f-id').value = state.id; schedule();
+  if (state.saved && !confirm('هذا ينشئ إهداءً جديدًا بمفتاح جديد. الرابط الحالي لن يعود صالحًا لهذا المحتوى. متأكد؟')) return;
+  state.saved = false;
+  freshIdentity();
+  schedule();
 });
 
 /* ---------- بناء JSON ---------- */
@@ -375,7 +377,7 @@ async function buildGift(type = state.type) {
 }
 function validate(g) {
   const errs = [];
-  if (!/^[a-zA-Z0-9_-]{1,64}$/.test(state.id)) errs.push('معرّف الرابط مطلوب (حروف إنجليزية وأرقام وشرطة).');
+  if (!/^[a-zA-Z0-9_-]{1,64}$/.test(state.id) || !state.key) errs.push('اضغط «معرّف جديد» لتوليد معرّف ومفتاح.');
   if (state.type === 'secret' && !state.secret.password) errs.push('كلمة السر مطلوبة للإهداء الخاص.');
   const eff = effectiveType();
   if ((eff === 'love' || eff === 'gifts') && !state.items.length) errs.push('أضف هدية واحدة على الأقل.');
@@ -394,7 +396,7 @@ function baseUrl() {
   const d = location.href.replace(/admin\/?(index\.html)?(\?.*)?$/, '');
   return (v || d).replace(/\/?$/, '/');
 }
-function finalLink() { return `${baseUrl()}?g=${state.id || '…'}`; }
+function finalLink() { return `${baseUrl()}?g=${state.id || '…'}#k=${state.key || '…'}`; }
 let qr;
 function renderQR(link) {
   const box = $('#qr');
@@ -407,7 +409,8 @@ async function updateOutput() {
   const g = await buildGift();
   const errs = validate(g);
   $('#errors').textContent = errs.join('\n');
-  lastJSON = JSON.stringify(g, null, 2);
+  // ما يُرفع للمستودع هو المغلّف المشفّر فقط
+  lastJSON = state.key ? JSON.stringify(await sealJSON(g, state.key), null, 2) : '';
   $('#json').value = lastJSON;
   const mb = lastJSON.length / 1024 / 1024;
   const sz = $('#size'); sz.textContent = `حجم الملف: ${mb < 1 ? Math.round(mb * 1024) + ' KB' : mb.toFixed(1) + ' MB'}`; sz.classList.toggle('is-warn', mb > 6);
@@ -419,10 +422,54 @@ async function updateOutput() {
 }
 $('#baseUrl').addEventListener('input', () => { try { localStorage.setItem('ihda:base', $('#baseUrl').value); } catch {} schedule(); });
 $('#copyLink').addEventListener('click', async () => { try { await navigator.clipboard.writeText(finalLink()); $('#copyLink').textContent = 'تم ✓'; setTimeout(() => ($('#copyLink').textContent = 'نسخ'), 1500); } catch { prompt('انسخ الرابط:', finalLink()); } });
-$('#download').addEventListener('click', () => {
-  const blob = new Blob([lastJSON], { type: 'application/json' });
-  const a = h('a', { href: URL.createObjectURL(blob), download: `${state.id}.json` });
+function download(text, name, type = 'application/json') {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = h('a', { href: url, download: name });
   document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+$('#download').addEventListener('click', () => {
+  if (!lastJSON) return;
+  download(lastJSON, `${state.id}.json`);
+  state.saved = true;
+  addToRegistry();
+});
+
+/* ---------- سجل الروابط (محلي فقط، لا يُرفع) ---------- */
+const REG_KEY = 'ihda:registry';
+const loadReg = () => { try { return JSON.parse(localStorage.getItem(REG_KEY) || '[]'); } catch { return []; } };
+const saveReg = (r) => { try { localStorage.setItem(REG_KEY, JSON.stringify(r.slice(0, 500))); } catch {} };
+function addToRegistry() {
+  const reg = loadReg().filter((x) => x.id !== state.id);
+  reg.unshift({ id: state.id, link: finalLink(), recipient: state.recipient || '', type: state.type, at: new Date().toISOString() });
+  saveReg(reg); renderReg();
+}
+function renderReg() {
+  const reg = loadReg();
+  $('#regCount').textContent = String(reg.length);
+  const box = $('#regList'); box.innerHTML = '';
+  if (!reg.length) { box.append(h('p', { class: 'reg__note', text: 'ما فيه روابط محفوظة بعد. تظهر هنا عند تنزيل أي ملف.' })); return; }
+  for (const r of reg) {
+    box.append(h('div', { class: 'reg__item' }, [
+      h('b', { text: `${r.recipient || 'بلا اسم'} · ${r.type}` }),
+      h('small', { text: new Date(r.at).toLocaleString('ar-SA-u-ca-gregory-nu-latn') }),
+      h('code', { text: r.link }),
+      h('div', { class: 'row wrap' }, [
+        h('button', { type: 'button', class: 'btn btn--soft btn--sm', text: 'نسخ', onclick: async () => { try { await navigator.clipboard.writeText(r.link); } catch { prompt('انسخ الرابط:', r.link); } } }),
+        h('button', { type: 'button', class: 'btn btn--ghost btn--sm', text: 'فتح', onclick: () => window.open(r.link, '_blank', 'noopener') }),
+      ]),
+    ]));
+  }
+}
+$('#regExport').addEventListener('click', () => {
+  const reg = loadReg();
+  if (!reg.length) return alert('السجل فاضي.');
+  const txt = reg.map((r) => `${new Date(r.at).toLocaleDateString('ar-SA-u-ca-gregory-nu-latn')}\t${r.recipient || '-'}\t${r.type}\t${r.link}`).join('\n');
+  download(`التاريخ\tالمستلم\tالنوع\tالرابط\n${txt}`, 'سجل-روابط-الاهداءات.tsv', 'text/tab-separated-values;charset=utf-8');
+});
+$('#regClear').addEventListener('click', () => {
+  if (!confirm('مسح السجل من هذا المتصفح؟ الروابط نفسها تبقى شغّالة، لكن لن تقدر تسترجعها من هنا.')) return;
+  saveReg([]); renderReg();
 });
 $('#preview').addEventListener('click', async () => {
   const g = await buildGift();
@@ -436,8 +483,9 @@ $('#importFile').addEventListener('change', async (e) => {
   const f = e.target.files[0]; if (!f) return;
   try {
     const g = JSON.parse(await f.text());
+    if (g.enc === 2) { alert('هذا الملف مشفّر ولا يمكن فتحه هنا. لتعديل إهداء، ابنِه من جديد وأرسل رابطًا جديدًا.'); return; }
     if (g.type === 'secret') { alert('الإهداء الخاص مشفّر ولا يمكن استيراده للتعديل. ابنِه من جديد.'); return; }
-    state.type = g.type || 'love'; state.id = f.name.replace(/\.json$/i, '');
+    state.type = g.type || 'love';
     Object.assign(state, { recipient: g.recipient || '', sender: g.sender || '', gender: g.gender || 'f', theme: g.theme || 'pink', pattern: g.pattern || 'hearts', sticker: g.sticker || '', stickerYes: g.stickerYes || '', hubTitle: g.hubTitle || '' });
     if (g.ask && typeof g.ask === 'object') state.ask = { question: '', yes: '', no: '', hubTitle: '', ...g.ask, steps: (g.ask.steps || []).join('\n') };
     if (g.items) state.items = g.items.map((it) => ({ ...newItem(it.type), ...it, portrait: it.portrait ? 'true' : '', photos: (it.photos || []).map((p) => ({ src: '', caption: '', ...p })) }));
@@ -453,4 +501,6 @@ $('#importFile').addEventListener('change', async (e) => {
 /* ---------- تشغيل ---------- */
 function renderAll() { renderTypes(); renderSwatches(); renderSticker(); renderNameAudio(); renderItems(); renderDays(); hydrate(); applyVisibility(); schedule(); }
 try { $('#baseUrl').value = localStorage.getItem('ihda:base') || ''; } catch {}
+freshIdentity();
+renderReg();
 renderAll();

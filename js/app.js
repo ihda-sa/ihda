@@ -6,15 +6,22 @@ import { renderDaily } from './flows/daily.js';
 import { renderSecret } from './flows/secret.js';
 import { renderArrow } from './flows/arrow.js';
 import { renderNamesong } from './flows/namesong.js';
+import { openJSON } from './crypto.js';
 
 const app = document.getElementById('app');
 const ID_RE = /^[a-zA-Z0-9_-]{1,64}$/;
 
 function getId() {
   const q = new URLSearchParams(location.search).get('g');
-  if (q) return q.trim();
-  const h = location.hash.replace(/^#\/?/, '').trim();
-  return h || null;
+  return q ? q.trim() : null;
+}
+
+/** مفتاح فك التشفير يعيش بعد # في الرابط، والمتصفح لا يرسله للخادم أبدًا */
+function getKey() {
+  const h = location.hash.replace(/^#/, '');
+  if (!h) return null;
+  const k = new URLSearchParams(h).get('k');
+  return k ? k.trim() : null;
 }
 
 function applyTheme(gift) {
@@ -111,7 +118,27 @@ async function boot() {
       el('p', { class: 'screen__hint', html: `المعرّف: <code class="id">${id.replace(/[<>&"']/g, '')}</code>` }),
     );
   }
-  gift.id = gift.id || id;
+
+  // الإهداءات الحقيقية مشفّرة بالكامل: لا تُقرأ إلا بمفتاح موجود في الرابط نفسه
+  if (gift && gift.enc === 2) {
+    const key = getKey();
+    if (!key) {
+      return renderState(
+        'الرابط ناقص',
+        'هذا الإهداء مقفل، والجزء الذي يفتحه محذوف من الرابط. انسخ الرابط كاملًا كما وصلك — لا تقطع منه شيئًا.',
+        el('p', { class: 'screen__hint', text: 'الرابط الكامل ينتهي بعلامة # وبعدها حروف وأرقام.' }),
+      );
+    }
+    try {
+      gift = await openJSON(gift, key);
+    } catch {
+      return renderState(
+        'تعذّر فتح الإهداء',
+        'مفتاح الرابط غير صحيح أو ناقص. اطلب الرابط مرة ثانية ممن أرسله لك.',
+      );
+    }
+  }
+  gift.id = id;
   if (!gift.sticker) gift.sticker = defaultSticker();
   renderGift(gift, app);
 }

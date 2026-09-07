@@ -24,6 +24,12 @@
     </div>
   </header>
 
+  <div class="notice">
+    <strong>كل إهداء يُشفَّر قبل الحفظ.</strong>
+    مفتاح الفتح يوجد في الرابط النهائي فقط — لا في الملف ولا على الخادم.
+    من يفقد الرابط يفقد المحتوى نهائيًا، فاحفظ الرابط مع بيانات الزبون.
+  </div>
+
   <main class="admin">
     <form class="admin__form" id="form" novalidate>
       <section class="panel">
@@ -37,10 +43,10 @@
           <div class="field">
             <label for="f-id">معرّف الرابط <span class="req">*</span></label>
             <div class="row">
-              <input id="f-id" name="id" dir="ltr" placeholder="sara-x7k2" pattern="[a-zA-Z0-9_\-]{1,64}">
-              <button type="button" class="btn btn--soft btn--sm" id="genId">توليد</button>
+              <input id="f-id" name="id" dir="ltr" readonly>
+              <button type="button" class="btn btn--soft btn--sm" id="genId">معرّف جديد</button>
             </div>
-            <small>حروف إنجليزية وأرقام وشرطة فقط. هو اسم الملف واسم الرابط.</small>
+            <small>معرّف عشوائي لا يحمل اسم الزبون، حتى لا يدل الملف على صاحبه.</small>
           </div>
           <div class="field">
             <label for="f-recipient">اسم المستلم</label>
@@ -204,9 +210,18 @@
           <summary>عرض JSON</summary>
           <textarea id="json" readonly rows="14" dir="ltr"></textarea>
         </details>
+        <details class="reg">
+          <summary>سجل الروابط (<span id="regCount">0</span>)</summary>
+          <p class="reg__note">محفوظ في هذا المتصفح فقط ولا يُرفع مع الموقع. نزّله واحتفظ به خارج مجلد المشروع.</p>
+          <div class="row wrap">
+            <button type="button" class="btn btn--soft btn--sm" id="regExport">تنزيل السجل</button>
+            <button type="button" class="btn btn--ghost btn--sm" id="regClear">مسح السجل</button>
+          </div>
+          <div id="regList" class="reg__list"></div>
+        </details>
         <ol class="steps">
-          <li>احفظ الملف داخل مجلد <code class="id">gifts/</code> باسمه كما هو.</li>
-          <li>الصور المرفوعة تُحفظ داخل الملف نفسه، فلا تحتاج مجلد صور.</li>
+          <li>احفظ الملف المشفّر داخل مجلد <code class="id">gifts/</code> باسمه كما هو.</li>
+          <li>ارفعه للمستودع، ثم أرسل الرابط الكامل للزبون بما فيه ما بعد علامة #.</li>
           <li>ارفع التغييرات (GitHub Pages / Netlify). الرابط يعمل خلال دقيقة.</li>
         </ol>
       </section>

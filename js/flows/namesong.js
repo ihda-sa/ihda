@@ -234,7 +234,7 @@ export function renderNamesong(gift, root) {
     if (timeline && E) {
       const at = E.ctx.currentTime;
       beatPhase = ((at - startAt) / BEAT) % 1;
-      while (evIndex < timeline.events.length && timeline.events[evIndex].t <= at + 0.02) {
+      while (timeline && evIndex < timeline.events.length && timeline.events[evIndex].t <= at + 0.02) {
         const ev = timeline.events[evIndex++];
         if (ev.type === 'beat') { lastBeat = time; strongBeat = ev.strong; if (ev.strong) burst(3); }
         else if (ev.type === 'line') { currentLine = ev; caption.textContent = lines[ev.i]; caption.classList.remove('is-in'); void caption.offsetWidth; caption.classList.add('is-in'); }
@@ -242,7 +242,7 @@ export function renderNamesong(gift, root) {
         else if (ev.type === 'burst') burst(160);
         else if (ev.type === 'end') finish();
       }
-      if (currentLine) caption.style.setProperty('--p', `${Math.min(1, Math.max(0, (at - currentLine.t) / (currentLine.end - currentLine.t))) * 100}%`);
+      if (timeline && currentLine) caption.style.setProperty('--p', `${Math.min(1, Math.max(0, (at - currentLine.t) / (currentLine.end - currentLine.t))) * 100}%`);
     } else beatPhase = (time * 1.2) % 1;
     draw(time, dt);
     raf = requestAnimationFrame(loop);
@@ -273,7 +273,7 @@ export function renderNamesong(gift, root) {
     timeline = schedule(E, startAt, 2); evIndex = 0; currentLine = null;
     caption.textContent = ''; sign.classList.add('is-in');
   }
-  function finish() { timeline = null; caption.textContent = ''; done.hidden = false; }
+  function finish() { timeline = null; currentLine = null; caption.textContent = ''; done.hidden = false; }
   function stop() { running = false; cancelAnimationFrame(raf); try { E?.ctx.suspend(); } catch {} if ('speechSynthesis' in window) speechSynthesis.cancel(); }
 
   startBtn.addEventListener('click', play);

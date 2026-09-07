@@ -86,6 +86,18 @@ input:invalid { border-color: var(--no); }
 .upload__meta { flex: 1; font-size: 13px; color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .upload__url { font-size: 12px; color: var(--ink-3); cursor: pointer; text-decoration: underline; background: none; padding: 0; }
 .upload__url-input { margin-top: var(--s-1); }
+.notice { max-width: 1200px; margin: var(--s-4) auto 0; padding: var(--s-4) var(--s-5); border-radius: var(--r-md);
+  background: var(--surface); border-inline-start: 5px solid var(--brand); box-shadow: var(--shadow-sm);
+  font-size: 14px; line-height: 1.7; color: var(--ink-2); }
+.notice strong { color: var(--ink); }
+.reg { border-top: 1.5px solid var(--line); padding-top: var(--s-3); }
+.reg summary { cursor: pointer; font-weight: 800; color: var(--ink-2); font-size: 14px; }
+.reg__note { font-size: 13px; color: var(--ink-3); line-height: 1.6; margin: var(--s-2) 0; }
+.reg__list { display: grid; gap: var(--s-2); margin-top: var(--s-3); max-height: 260px; overflow: auto; }
+.reg__item { display: grid; gap: 2px; padding: var(--s-2) var(--s-3); border-radius: var(--r-sm); background: var(--surface-2); font-size: 13px; }
+.reg__item b { font-size: 14px; }
+.reg__item code { font-family: ui-monospace, Consolas, monospace; font-size: 11px; overflow-wrap: anywhere; color: var(--ink-3); direction: ltr; unicode-bidi: isolate; }
+.reg__item .row { gap: var(--s-1); }
 .size { font-size: 13px; color: var(--ink-3); }
 .is-rec { background: #b3123f !important; color: #fff !important; animation: pulse 1s infinite; }
 .size.is-warn { color: #b3123f; }
