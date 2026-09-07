@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>دخول</title>
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="referrer" content="no-referrer">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/styles.css">
+  <style>
+    .gate { min-height: 100dvh; display: grid; place-items: center; padding: 24px; }
+    .gate__card { width: 100%; max-width: 380px; background: var(--surface); border-radius: var(--r-lg);
+      padding: 32px 24px; box-shadow: var(--shadow-lg); display: grid; gap: 16px; text-align: center; }
+    .gate__icon { width: 56px; height: 56px; margin-inline: auto; color: var(--brand); }
+    .gate h1 { font-size: 22px; }
+    .gate p { font-size: 15px; color: var(--ink-2); }
+    .gate input { width: 100%; min-height: 52px; border-radius: var(--r-md); border: 2px solid var(--line);
+      background: var(--surface-2); font: inherit; font-size: 18px; font-weight: 700; text-align: center;
+      color: var(--ink); padding: 0 16px; }
+    .gate input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 4px var(--brand-soft); }
+    .gate form.is-error input { border-color: var(--no); animation: shake .4s var(--ease-out); }
+    .gate__err { color: #b3123f; font-size: 14px; min-height: 1.5em; }
+    .gate__note { font-size: 13px; color: var(--ink-3); line-height: 1.7; }
+    #panel { display: none; }
+    #panel.is-on { display: block; }
+  </style>
+</head>
+<body class="admin-body">
+
+  <div class="gate" id="gate">
+    <form class="gate__card" id="gateForm" novalidate autocomplete="off">
+      <svg class="gate__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+      </svg>
+      <h1>لوحة إنشاء الإهداءات</h1>
+      <p>هذي الصفحة مقفلة. اكتب كلمة السر لفتحها.</p>
+      <label class="sr-only" for="pw">كلمة السر</label>
+      <input id="pw" type="password" autocomplete="current-password" placeholder="••••••••" required>
+      <p class="gate__err" id="gateErr" role="alert"></p>
+      <button class="btn" type="submit" id="gateBtn">فتح اللوحة</button>
+      <p class="gate__note">محتوى اللوحة مشفّر داخل هذي الصفحة. بدون كلمة السر لا يظهر منه شيء.</p>
+    </form>
+  </div>
+
+  <div id="panel"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script id="payload" type="application/json">"__PAYLOAD__"</script>
+  <script>
+  (function () {
+    const P = JSON.parse(document.getElementById('payload').textContent);
+    const form = document.getElementById('gateForm');
+    const input = document.getElementById('pw');
+    const err = document.getElementById('gateErr');
+    const btn = document.getElementById('gateBtn');
+
+    const bytes = (b64) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+
+    async function unlock(password) {
+      const enc = new TextEncoder();
+      const base = await crypto.subtle.importKey('raw', enc.encode(password.normalize('NFKC')), 'PBKDF2', false, ['deriveKey']);
+      const key = await crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt: bytes(P.salt), iterations: P.iter, hash: 'SHA-256' },
+        base, { name: 'AES-GCM', length: 256 }, false, ['decrypt'],
+      );
+      const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: bytes(P.iv) }, key, bytes(P.ct));
+      return JSON.parse(new TextDecoder().decode(pt));
+    }
+
+    async function boot(bundle) {
+      // الأنماط
+      const style = document.createElement('style');
+      style.textContent = bundle.css;
+      document.head.append(style);
+
+      // الواجهة
+      const panel = document.getElementById('panel');
+      panel.innerHTML = bundle.html;
+      document.getElementById('gate').remove();
+      panel.classList.add('is-on');
+
+      // الوحدات: كل ملف في نطاقه الخاص عبر رابط blob
+      const mod = (src) => URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+      const cryptoUrl = mod(bundle.crypto);
+      const qrUrl = mod(bundle.qr);
+      const adminSrc = bundle.admin
+        .replace(/from '\.\/crypto\.js'/g, `from '${cryptoUrl}'`)
+        .replace(/from '\.\/qr-card\.js'/g, `from '${qrUrl}'`);
+      await import(mod(adminSrc));
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const pw = input.value;
+      if (!pw) { err.textContent = 'اكتب كلمة السر.'; return; }
+      btn.disabled = true; btn.textContent = 'نفتح…'; err.textContent = '';
+      try {
+        const bundle = await unlock(pw);
+        await boot(bundle);
+      } catch (ex) {
+        form.classList.remove('is-error'); void form.offsetWidth; form.classList.add('is-error');
+        err.textContent = 'كلمة السر غير صحيحة.';
+        btn.disabled = false; btn.textContent = 'فتح اللوحة';
+        input.select();
+      }
+    });
+
+    setTimeout(() => input.focus(), 200);
+  })();
+  </script>
+</body>
+</html>
