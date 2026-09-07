@@ -84,6 +84,10 @@
       document.getElementById('gate').remove();
       panel.classList.add('is-on');
 
+      // مفتاح النشر يعيش في الذاكرة فقط بعد فك التشفير
+      window.__IHDA_TOKEN = bundle.token || '';
+      window.__IHDA_REPO = bundle.repo || 'ihda-sa/ihda';
+
       // الوحدات: كل ملف في نطاقه الخاص عبر رابط blob
       const mod = (src) => URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
       const cryptoUrl = mod(bundle.crypto);

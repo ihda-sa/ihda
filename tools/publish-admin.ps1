@@ -73,6 +73,65 @@ if ($result -ne [System.Windows.Forms.DialogResult]::OK) { exit 0 }
 if ($p1 -ne $p2) { Show-Msg 'الكلمتان غير متطابقتين. شغّل الملف من جديد.' 'خطأ' 'Error'; exit 1 }
 if ($p1.Length -lt 6) { Show-Msg 'كلمة السر قصيرة. استخدم ٦ خانات فأكثر.' 'خطأ' 'Error'; exit 1 }
 
+# ---------- مفتاح النشر التلقائي ----------
+$tokenFile = Join-Path (Get-Location) '.gh-token'
+if (-not (Test-Path $tokenFile)) {
+  $ask = [System.Windows.Forms.MessageBox]::Show(
+    "تبي تفعّل النشر التلقائي؟`n`nمع التفعيل يصير زر «انشر الإهداء» داخل اللوحة يرفع الإهداء للموقع مباشرة، بلا أي خطوة يدوية.`n`nيحتاج مفتاح وصول من GitHub. اضغط نعم وأشرح لك الخطوات.",
+    'النشر التلقائي', 'YesNo', 'Question', 'Button1', $RTL)
+
+  if ($ask -eq [System.Windows.Forms.DialogResult]::Yes) {
+    Show-Msg "افتح هذي الصفحة في المتصفح:`n`ngithub.com/settings/personal-access-tokens/new`n`n1) الاسم: ihda-publish`n2) Expiration: اختر No expiration`n3) Repository access: Only select repositories ثم اختر ihda`n4) Permissions ثم Repository permissions ثم Contents: اجعلها Read and write`n5) اضغط Generate token وانسخ المفتاح`n`nبعدها الصقه في النافذة الجاية." 'خطوات إنشاء المفتاح' 'Information'
+    Start-Process 'https://github.com/settings/personal-access-tokens/new'
+
+    $tf = New-Object System.Windows.Forms.Form
+    $tf.Text = 'مفتاح النشر'
+    $tf.ClientSize = New-Object System.Drawing.Size(460, 170)
+    $tf.StartPosition = 'CenterScreen'
+    $tf.FormBorderStyle = 'FixedDialog'
+    $tf.MaximizeBox = $false; $tf.MinimizeBox = $false
+    $tf.RightToLeft = 'Yes'; $tf.RightToLeftLayout = $true
+    $tf.Font = New-Object System.Drawing.Font('Segoe UI', 10)
+    $tf.TopMost = $true
+
+    $tl = New-Object System.Windows.Forms.Label
+    $tl.Text = 'الصق المفتاح هنا (يبدأ بـ github_pat_):'
+    $tl.SetBounds(20, 18, 420, 22)
+    $tf.Controls.Add($tl)
+
+    $tt = New-Object System.Windows.Forms.TextBox
+    $tt.SetBounds(20, 46, 420, 26)
+    $tt.RightToLeft = 'No'
+    $tf.Controls.Add($tt)
+
+    $tn = New-Object System.Windows.Forms.Label
+    $tn.Text = 'يُحفظ على جهازك فقط ولا يُرفع للمستودع.'
+    $tn.SetBounds(20, 78, 420, 22)
+    $tn.ForeColor = [System.Drawing.Color]::Gray
+    $tf.Controls.Add($tn)
+
+    $tok = New-Object System.Windows.Forms.Button
+    $tok.Text = 'حفظ'; $tok.SetBounds(20, 112, 110, 32)
+    $tok.DialogResult = [System.Windows.Forms.DialogResult]::OK
+    $tf.Controls.Add($tok); $tf.AcceptButton = $tok
+
+    $tsk = New-Object System.Windows.Forms.Button
+    $tsk.Text = 'تخطّي'; $tsk.SetBounds(140, 112, 110, 32)
+    $tsk.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
+    $tf.Controls.Add($tsk); $tf.CancelButton = $tsk
+
+    $tf.Add_Shown({ $tt.Focus() })
+    $tres = $tf.ShowDialog()
+    $tokVal = $tt.Text.Trim()
+    $tf.Dispose()
+
+    if ($tres -eq [System.Windows.Forms.DialogResult]::OK -and $tokVal.Length -gt 20) {
+      Set-Content -Path $tokenFile -Value $tokVal -Encoding ascii -NoNewline
+      Show-Msg 'تم حفظ المفتاح. النشر التلقائي بيصير مفعّلًا داخل اللوحة.' 'تم' 'Information'
+    }
+  }
+}
+
 # ---------- البناء ----------
 Write-Host "Building encrypted admin panel..."
 $env:IHDA_PW = $p1

@@ -99,7 +99,13 @@ const run = async () => {
     if (again !== pw) { console.error('\n✗ الكلمتان غير متطابقتين.'); process.exit(1); }
   }
 
+  let token = '';
+  try { token = readFileSync(join(ROOT, '.gh-token'), 'utf8').trim(); } catch {}
+  if (process.env.IHDA_GH_TOKEN) token = process.env.IHDA_GH_TOKEN.trim();
+
   const bundle = {
+    token,
+    repo: 'ihda-sa/ihda',
     html: read('admin/panel.html'),
     css: read('css/admin.css'),
     crypto: read('js/crypto.js'),
@@ -115,6 +121,7 @@ const run = async () => {
   console.log(`\n✓ تم بناء اللوحة المقفلة`);
   console.log(`  المحتوى المشفّر: ${kb} كيلوبايت`);
   console.log(`  الملف: admin/index.html`);
+  console.log(token ? `  النشر التلقائي: مفعّل ✓` : `  النشر التلقائي: غير مفعّل (لا يوجد ملف .gh-token)`);
   console.log(`\n  الرابط بعد النشر: https://gift.wesal-shop.com/admin/`);
   console.log(`  لا يفتحها إلا من يعرف كلمة السر. احفظها — لا يمكن استرجاعها.\n`);
 };

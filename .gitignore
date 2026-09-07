@@ -14,3 +14,6 @@ admin/
 css/admin.css
 js/admin.js
 js/qr-card.js
+
+# مفتاح الوصول للنشر التلقائي — لا يُرفع إطلاقًا
+.gh-token
