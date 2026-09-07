@@ -5,17 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>الصفحة غير موجودة</title>
   <meta name="robots" content="noindex">
-  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    /* مستقلة تمامًا: تعمل على أي مسار وبأي نطاق بلا ملفات خارجية */
+    body { margin: 0; min-height: 100dvh; display: grid; place-items: center; padding: 24px;
+      font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 16px; line-height: 1.8;
+      color: #4a2233; background: #fbe4ec;
+      background-image: radial-gradient(circle at 20% 10%, #f7cfdc, transparent 55%); }
+    main { max-width: 380px; text-align: center; display: grid; gap: 16px; justify-items: center; }
+    svg { width: 120px; height: 120px; }
+    h1 { margin: 0; font-size: 24px; }
+    p { margin: 0; color: #7a465b; }
+    code { font-family: ui-monospace, Consolas, monospace; background: #fff; padding: 2px 8px; border-radius: 6px; direction: ltr; unicode-bidi: isolate; }
+    a { display: inline-flex; align-items: center; min-height: 48px; padding: 0 24px; margin-top: 8px;
+      border-radius: 16px; background: #e2568a; color: #fff; font-weight: 700; text-decoration: none;
+      box-shadow: 0 1px 3px rgb(74 34 51 / .1); }
+  </style>
 </head>
 <body>
-  <main class="app">
-    <div class="state">
-      <h1 class="state__title">ما وجدنا هذي الصفحة</h1>
-      <p class="screen__sub">تأكد من الرابط كما وصلك. روابط الإهداءات تبدأ بـ <code class="id">?g=</code></p>
-      <a class="btn" href="/">الصفحة الرئيسية</a>
-    </div>
+  <main>
+    <svg viewBox="0 0 200 200" aria-hidden="true">
+      <g fill="#fff" stroke="#4a2233" stroke-width="5" stroke-linejoin="round">
+        <path d="M48 78 L38 28 L82 58 Z"/><path d="M152 78 L162 28 L118 58 Z"/>
+        <ellipse cx="100" cy="112" rx="72" ry="62"/>
+      </g>
+      <path d="M50 66 L45 42 L68 58 Z M150 66 L155 42 L132 58 Z" fill="#f6b3cb"/>
+      <circle cx="62" cy="128" r="9" fill="#f6b3cb"/><circle cx="138" cy="128" r="9" fill="#f6b3cb"/>
+      <g fill="none" stroke="#4a2233" stroke-width="5" stroke-linecap="round">
+        <path d="M70 104 q8 6 16 4"/><path d="M130 104 q-8 6 -16 4"/>
+        <circle cx="78" cy="112" r="4" fill="#4a2233"/><circle cx="122" cy="112" r="4" fill="#4a2233"/>
+        <path d="M90 132 q10 -8 20 0"/>
+      </g>
+    </svg>
+    <h1>ما وجدنا هذي الصفحة</h1>
+    <p>تأكد من الرابط كما وصلك بالضبط. روابط الإهداءات تبدأ بـ <code>?g=</code></p>
+    <a href="./">الصفحة الرئيسية</a>
   </main>
 </body>
 </html>
